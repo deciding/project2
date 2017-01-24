@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Draggable + Sortable</title>
+
+  <script src="external/jquery/jquery.js"></script>
+<script src="jquery-ui.min.js"></script>
+<script src="tsp.js"></script>
+
+<link href="bootstrap.css" rel="stylesheet" />
+<link href="jquery-ui.min.css" rel="stylesheet" />
+<link href="jquery-ui.structure.min.css" rel="stylesheet" />
+<link href="jquery-ui.theme.min.css" rel="stylesheet" />
+<style>
+  #feedback { font-size: 1.4em; }
+  #selectable .ui-selecting { background: #FECA40; }
+  #selectable .ui-selected { background: #F39814; }
+  #selectable { list-style-type: none; margin: 0; padding: 0; width: 1000px; }
+  #selectable li { margin: 3px; padding: 1px; float: left; width: 40px; height: 40px; font-size: 4em; text-align: center; }
+  </style>
+  <script>
+  $( function() {
+    var DEBUG=true;
+    var vertsOnRow=21;
+    var selectedVert=[];
+    var selectedEdge=[];
+
+    function calWeight(v1,v2){
+      var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
+      var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
+
+      if(v1===v2) return "point";
+      for(i in selectedEdge){
+        if(selectedEdge[i].v1===v1&&selectedEdge[i].v2===v2||selectedEdge[i].v1===v2&&selectedEdge[i].v2===v1){
+          var res=-selectedEdge[i].w;
+          selectedEdge.splice(i,1);
+          return res;
+        }
+      }
+      if(v1x===v2x) return Math.abs(v1y-v2y);
+      if(v1y===v2y) return Math.abs(v1x-v2x);
+      return "lean"; 
+    }
+
+    function drawLine(v1,v2){
+      var weight=calWeight(v1,v2);
+      if(weight<0){
+        for(i=1;i<-weight;i++)
+          $("#"+((v1x+i)*vertsOnRow+v1y)).css("background","#f6f6f6");
+        return;
+      }
+
+      if(typeof weight ==="string") return;
+      selectedEdge.push({v1:v1,v2:v2,w:weight});
+      if(DEBUG) console.log(selectedEdge);
+      var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
+      var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
+      if(v1x===v2x)
+        for(i=1;i<weight;i++){
+          $("#"+(v1x*vertsOnRow+v1y+i)).css("background","pink");
+        }
+      else if(v1y===v2y)
+        for(i=1;i<weight;i++){
+          $("#"+((v1x+i)*vertsOnRow+v1y)).css("background","pink");
+        }
+    }
+
+    $( "#selectable" ).on("mousedown",function(e){}).selectable();
+    for(i=0;i<300;i++)
+      $("#selectable").append('<li id=\"'+i+'\" class="ui-state-default"></li>');
+    $("#confirmVert").click(function(){
+      $("#selectable").children().each(function(){
+        if($(this).hasClass("ui-selected"))
+          selectedVert.push($(this).attr("id"));
+      });
+      if(DEBUG)
+        console.log(selectedVert);
+      $(this).hide();
+      $("#drawLine").show();
+      $("#selectable").selectable("disable");
+      var closureFlag=false;
+      var prevVert;
+      $("#selectable").on("click",".ui-selected",function(){
+        if(!closureFlag) {
+          prevVert=$(this).attr("id");
+          closureFlag=!closureFlag;
+          return;
+        }
+        drawLine(parseInt(prevVert),parseInt($(this).attr("id")));
+        closureFlag=!closureFlag;
+      })
+    });
+  } );
+  </script>
+  </script>
+</head>
+<body>
+
+ <ol id="selectable">
+ </ol>
+<button id="confirmVert">Confirm vertices</button>
+<button id="drawLine" style="display:none">Draw lines</button>
+</body>
+</html>

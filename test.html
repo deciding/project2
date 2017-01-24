@@ -1,0 +1,183 @@
+<html>
+<head>
+<script src="external/jquery/jquery.js"></script>
+<script src="jquery-ui.min.js"></script>
+
+<link href="bootstrap.css" rel="stylesheet" />
+<link href="jquery-ui.min.css" rel="stylesheet" />
+<link href="jquery-ui.structure.min.css" rel="stylesheet" />
+<link href="jquery-ui.theme.min.css" rel="stylesheet" />
+<style>
+.selectArea{
+	border:solid;
+	height:200px;
+}
+ul{
+	list-style-type: none;
+}
+#sortable{
+	height:200px;
+}
+.item{
+	width:80px;
+}
+.glyphicon-remove{
+	float:right;
+}
+#dialog{
+	display:none;
+}
+.err{
+	color:red;
+}
+
+</style>
+</head>
+<body>
+<div class="selectArea col-sm-1">
+	<ul id="draggable">
+	  <li class="ui-state-default item" val="name">Name</li>
+	  <li class="ui-state-default item" val="sex">Gender</li>
+	</ul>
+</div>
+<div class="selectArea col-sm-1">
+	<ul id="sortable" class="col-sm-12">
+	</ul>
+</div>
+<button id="save" type="button">Save</button>
+<button id="del" type="button">Delete</button>
+<span id="saveErr" class="err"></span>
+<select id="layouts">
+	<option value="all">Select a layout...</option>
+</select>
+<div id="dialog" title="Input a name">
+  Name: <input id="layoutName" type="text" >
+  <br>
+  <span id="layoutErr" class="err"></span>
+</div>
+<script>
+$( function() {
+	var cols={
+		"name": "Name",
+		"sex":"Gender"
+	}
+
+	var sortableLen=0;
+	var dragObj={
+	  connectToSortable: "#sortable",
+	  helper:"clone",
+	  revert: "invalid",
+	  start:function(event,ui){
+	  	sortableLen=$("#sortable").children().length;
+	  },
+	  stop:function(event,ui){
+	  	if($("#sortable").children().length>sortableLen){
+	  		$(this).draggable("destroy").remove();
+	  		ui.helper.append("<span class='glyphicon glyphicon-remove'>");
+	  	}
+	  }
+	};
+	var colFields=[];
+	function loadOptions(){
+		var layoutMap=localStorage.getItem("layoutMap")?JSON.parse(localStorage.getItem("layoutMap")):{};
+		for(layoutName in layoutMap){
+			$('<option></option>').val(layoutName).text(layoutName).appendTo("#layouts");
+		}
+	}
+	loadOptions();
+
+	function getColFields(){
+		colFields=[];
+		$("#sortable").children().each(function(index,element){
+			colFields.push($(this).attr("val"));
+		})
+	}
+	function arrEq(arr1,arr2){
+		if(arr1.length!=arr2.length) return false;
+		for(index in arr1){
+			if(arr1[index]!=arr2[index])
+				return false;
+		}
+		return true;
+	}
+	function changeSelectArea(){
+		$("#draggable").empty();
+		$("#sortable").empty();
+		for(index in colFields){
+			var field=colFields[index];
+			$('<li class="ui-state-default item ui-draggable ui-draggable-handle"></li>').attr("val",field).text(cols[field]).append("<span class='glyphicon glyphicon-remove'>").appendTo("#sortable");
+		}
+		for(field in cols){
+			if(colFields.indexOf(field)>-1) continue;
+			$('<li class="ui-state-default item ui-draggable ui-draggable-handle"></li>').attr("val",field).text(cols[field]).draggable(dragObj).appendTo("#draggable");
+		}
+	}
+	$("#layouts").change(function(){
+		var checkedLayout=$("#layouts").children(":selected").val();
+		var layoutMap=localStorage.getItem("layoutMap")?JSON.parse(localStorage.getItem("layoutMap")):{};
+		colFields=layoutMap[checkedLayout]?layoutMap[checkedLayout]:[];
+		changeSelectArea();
+	});
+	$("#del").click(function(){
+		var checkedLayout=$("#layouts").children(":selected").val();
+		$("#layouts").children(":selected").remove();
+		colFields=[];
+		changeSelectArea();
+		$("layouts").children().eq(0).prop("selected",true);
+		var layoutMap=localStorage.getItem("layoutMap")?JSON.parse(localStorage.getItem("layoutMap")):{};
+		delete layoutMap[checkedLayout];
+		localStorage.setItem("layoutMap",JSON.stringify(layoutMap));
+	});
+	$("#save").click(function(){
+		getColFields();
+		if(colFields.length==0) {
+			$("#saveErr").text("No columns selected");
+			return;
+		}
+		$("#saveErr").text("");
+		$("#layoutName").attr("placeholder",colFields);
+		$( "#dialog" ).dialog({
+			modal:true,
+			buttons: [
+			    {
+			      text: "Ok",
+			      icons: {
+			        primary: "ui-icon-heart"
+			      },
+			      click: function() {
+			      	var layoutMap=localStorage.getItem("layoutMap")?JSON.parse(localStorage.getItem("layoutMap")):{};
+			      	var layoutName=$("#layoutName").val()===""?$("#layoutName").attr("placeholder"):$("#layoutName").val();
+			      	$("#layoutName").val("");
+			      	for(key in layoutMap){
+			      		if(layoutName===key) {
+			      			$("#layoutErr").text("The name has already been used");
+			      			return;
+			      		}
+			      		if(arrEq(layoutMap[key],colFields)){
+			      			$("#layoutErr").text("The layout has already existed with the name: "+key);
+			      			return;
+			      		}
+			      	}
+			      	layoutMap[layoutName]=colFields;
+			      	localStorage.setItem("layoutMap",JSON.stringify(layoutMap));
+			      	//TODO:add options
+			      	$('<option></option>').val(layoutName).text(layoutName).appendTo("#layouts").prop("selected",true);
+			        $( this ).dialog( "close" );
+			      }
+			    }
+			  ]
+		});
+	});
+	$( "#sortable" ).sortable({
+	  revert: "true"
+	}).on("click", ".glyphicon-remove",function(){
+		var $li=$(this).parents("li");
+		$("<li></li>").addClass("ui-state-default item").attr("val",$li.attr("val")).text($li.text()).draggable(dragObj).appendTo("#draggable");
+		$li.remove();
+	});
+	$( "#draggable" ).children().draggable(dragObj);
+	$( "ul, li" ).disableSelection();
+});
+</script>
+</body>
+</html>
