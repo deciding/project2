@@ -26,7 +26,7 @@
     var vertsOnRow=21;
     var selectedVert=[];
     var selectedEdge=[];
-
+    var 
     function calWeight(v1,v2){
       var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
       var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
@@ -45,25 +45,31 @@
     }
 
     function drawLine(v1,v2){
+      var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
+      var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
       var weight=calWeight(v1,v2);
       if(weight<0){
-        for(i=1;i<-weight;i++)
-          $("#"+((v1x+i)*vertsOnRow+v1y)).css("background","#f6f6f6");
+        if(v1x===v2x)
+          for(i=1;i<-weight;i++){
+            $("#"+(v1x*vertsOnRow+Math.min(v1y,v2y)+i)).css("background","#f6f6f6");
+          }
+        else if(v1y===v2y)
+          for(i=1;i<-weight;i++){
+            $("#"+((Math.min(v1x,v2x)+i)*vertsOnRow+v1y)).css("background","#f6f6f6");
+          }
         return;
       }
 
       if(typeof weight ==="string") return;
       selectedEdge.push({v1:v1,v2:v2,w:weight});
       if(DEBUG) console.log(selectedEdge);
-      var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
-      var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
       if(v1x===v2x)
         for(i=1;i<weight;i++){
-          $("#"+(v1x*vertsOnRow+v1y+i)).css("background","pink");
+          $("#"+(v1x*vertsOnRow+Math.min(v1y,v2y)+i)).css("background","pink");
         }
       else if(v1y===v2y)
         for(i=1;i<weight;i++){
-          $("#"+((v1x+i)*vertsOnRow+v1y)).css("background","pink");
+          $("#"+((Math.min(v1x,v2x)+i)*vertsOnRow+v1y)).css("background","pink");
         }
     }
 
