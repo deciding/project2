@@ -1,5 +1,4 @@
 $( function() {
-    var DEBUG=true;
     var vertsOnRow=21;
     //var numOfVertices=0;
     var selectedVert=[];
@@ -8,7 +7,7 @@ $( function() {
     var twoVertFlag=false;
     var prevVert;
     var shippingPoint=0;
-    var adjMat=[],dist=[];
+    //var adjMat=[],dist=[];
 
     function calWeight(v1,v2){
       var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
@@ -77,7 +76,11 @@ $( function() {
     }
 
     function loadLayout(){
+      $("#selectable").empty();
+      for(i=0;i<300;i++)
+        $("#selectable").append('<li id=\"'+i+'\" class="ui-state-default"></li>');
       var warehouseLayout=JSON.parse(localStorage.getItem("warehouseLayout"));
+      if(!warehouseLayout) return;
       selectedVert=warehouseLayout.selectedVert;
       selectedEdge=warehouseLayout.selectedEdge;
       numOfVertices=warehouseLayout.numOfVertices;
@@ -85,10 +88,6 @@ $( function() {
       shippingPoint=warehouseLayout.shippingPoint;
       adjMat=warehouseLayout.adjMat;
       dist=warehouseLayout.dist;
-
-      $("#selectable").empty();
-      for(i=0;i<300;i++)
-        $("#selectable").append('<li id=\"'+i+'\" class="ui-state-default"></li>');
       
       for(i in selectedVert)
         $("#"+selectedVert[i]).css("background","#f39814");
@@ -115,24 +114,29 @@ $( function() {
       $("#"+id).text($("#"+id).text()+"["+order+"]");
     }
     function drawLineOnPath(v1,v2,order){
-      var weight=calWeight(v1,v2);
+      var weight=adjMat[v1][v2];
+      v1=selectedVert[v1];
+      v2=selectedVert[v2];
+      if(DEBUG&&weight===Infinity)
+        console.log("inf edge err");
       var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
       var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
       if(v1x===v2x)
-        for(i=1;i<weight;i++){
+        for(i=1;i<-weight;i++){
           drawPointOnPath(v1x*vertsOnRow+Math.min(v1y,v2y)+i,order++);
         }
       else if(v1y===v2y)
-        for(i=1;i<weight;i++){
+        for(i=1;i<-weight;i++){
           drawPointOnPath((Math.min(v1x,v2x)+i)*vertsOnRow+v1y,order++);
         }
       return order;
     }
     function drawPath(){
       var endPoint=selectedEdge[shoppingList[0]];
-      for(i in finalPath){
+      var order=0;
+      for(var i=0;i< finalPath.length;i++){
         if(i<finalPath.length-1)
-          drawLineOnPath(selectedEdge[finalPath[i]],selectedEdge[finalPath[i+1]]);
+          order=drawLineOnPath(finalPath[i],finalPath[i+1],order);
       }
     }
 
@@ -147,15 +151,23 @@ $( function() {
       return newArr;
     }
     function generateShoppingList(){
-      var size=Math.floor(Math.random()*10);
-      var randSelectedVert=[];
-      for(i in selectedVert)
-        randSelectedVert.push(parseInt(i));
-      randSelectedVert=shuffle(randSelectedVert);
+      // var size=Math.floor(Math.random()*8)+1;
+      // var randSelectedVert=[];
+      // for(i in selectedVert)
+      //   randSelectedVert.push(parseInt(i));
+      // randSelectedVert=shuffle(randSelectedVert);
 
-      shoppingList.push(selectedVert.indexOf(shippingPoint));
-      for(i=0;i<size;i++){
-        shoppingList.push(randSelectedVert[i]);
+      // shoppingList=[];
+      // shoppingList.push(selectedVert.indexOf(shippingPoint));
+      // for(i=0;i<size;i++){
+      //   shoppingList.push(randSelectedVert[i]);
+      // }
+
+      shoppingList=[30,10,3,13,31,19,22,32,11];
+      $("[index]").removeAttr("index").css("background","#F39814");
+      for(i in shoppingList){
+        if(i!=="0")
+         $("#"+selectedVert[shoppingList[i]]).css("background","#F36014").attr("index",shoppingList[i]);
       }
       //shoppingList.push(selectedVert.indexOf(shippingPoint));
     }
@@ -221,9 +233,10 @@ $( function() {
 
     $("#generateShortest").click(function(){
       generateShoppingList();
-      if(DEBUG) console.log(shoppingList);
+      if(DEBUG) console.log("shoppingList: "+shoppingList);
       floydWarshall();
       tspSetup();
+      if(DEBUG) console.log("shoppingOrder: "+shoppingOrder);
       dfsSetup();
       drawPath();
     });

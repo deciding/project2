@@ -4,6 +4,7 @@ var adjMat=[]; //lvl2
 var dist=[]; //lvl2
 var paths=[]; //lvl3
 var shoppingList=[]; //lvl2, arr of items that are going to be shopped, the start point is shipping area
+var DEBUG=true;
 var tspMemo=[]; //lvl3
 var shoppingOrder=[]; //lvl2
 var visited=[]; //lvl3
@@ -11,6 +12,8 @@ var onePath=[]; //lvl3
 var finalPath=[]; //lvl2
 
 function floydWarshall(){
+	adjMat=[];
+	dist=[];
 	for(i=0;i<numOfVertices;i++){
 		var oneRow=[];
 		for(j=0;j<numOfVertices;j++){
@@ -37,22 +40,26 @@ function floydWarshall(){
 }
 
 function tspSetup(){
-	for(i=0;i<=shoppingList.length;i++){
+	tspMemo=[];
+	paths=[];
+	for(i=0;i<11;i++){
 		var oneRow=[];
 		var oneRowOfPaths=[];
-		for(j=0;j<=(1<<shoppingList.length);j++){
+		for(j=0;j<(1<<11);j++){
 			oneRow.push(-1);
 			oneRowOfPaths.push([])
 		}
 		tspMemo.push(oneRow);
 		paths.push(oneRowOfPaths);
 	}
-	tsp(0,1);
+	var shortest=tsp(0,1);
+	if(DEBUG)
+		console.log(shortest);
 	shoppingOrder=paths[0][1];
 }
 
 function tsp(pos, bitmask) { // bitmask stores the visited coordinates
-    if (bitmask == (1 << (shoppingList.length + 1)) - 1)
+    if (bitmask == (1 << (shoppingList.length)) - 1)
       return dist[pos][0]; // return trip to close the loop
     if (tspMemo[pos][bitmask] != -1)
       return tspMemo[pos][bitmask];
@@ -60,40 +67,49 @@ function tsp(pos, bitmask) { // bitmask stores the visited coordinates
     var ans = Infinity;
     var bestNxt=Infinity;
 
-    for (nxt = 0; nxt <= shoppingList.length; nxt++) // O(n) here
+    for (var nxt = 0; nxt < shoppingList.length; nxt++) // O(n) here
       //no need pos condition?
       if ((bitmask & (1 << nxt)) == 0){ // if coordinate nxt is not visited yet
-      	if(dist[pos][nxt] + tsp(nxt, bitmask | (1 << nxt))<ans)
+      	var newDist=dist[shoppingList[pos]][shoppingList[nxt]] + tsp(nxt, bitmask | (1 << nxt));
+      	if(newDist<ans)
       		bestNxt=nxt;
-        ans = Math.min(ans, dist[pos][nxt] + tsp(nxt, bitmask | (1 << nxt)));
+        ans = Math.min(ans, newDist);
       }
-    var newPath=paths[bestNxt][bitmask|(1<<bestNxt)].slice();
-    newPath.push(nxt);
-    paths[pos][bitmask]=newPath;
+    if(bestNxt!==Infinity){
+	    var newPath=paths[bestNxt][bitmask|(1<<bestNxt)].slice();
+	    newPath.push(bestNxt);
+	    paths[pos][bitmask]=newPath;
+	}
     return tspMemo[pos][bitmask] = ans;
 }
 
 function dfsSetup(){
-	for(i=0;i<numOfVertices;i++)
+	finalPath=[];
+	visited=[]
+	for(var i=0;i<numOfVertices;i++)
 		visited.push(false);
 	shoppingOrder.unshift(0);
 	var prevPoint=0;
-	for(i in shoppingOrder){
+	for(var i=0;i<shoppingOrder.length;i++){
 		onePath=[];
-		dfs(prevPoint,shoppingOrder[shoppingOrder.length-1-i],dist[shoppingList[prevPoint]][shoppingList[shoppingOrder[shoppingOrder.length-1-i]]]);
-		for(i in onePath)
-			finalPath.push(shoppingList[onePath.pop()]);
+		dfs(shoppingList[prevPoint],shoppingList[shoppingOrder[shoppingOrder.length-1-i]],dist[shoppingList[prevPoint]][shoppingList[shoppingOrder[shoppingOrder.length-1-i]]]);
+		var kk=0;
+		while(onePath.length!==0)
+			finalPath.push(onePath.pop());
+		prevPoint=shoppingOrder[shoppingOrder.length-1-i];
 	}
 	finalPath.push(shoppingList[0]);
+	if(DEBUG) console.log("finalPath :"+finalPath);
 }
 function dfs(st,ed,dist){
 	if(dist<0) return false;
-	if(st===ed) return true;
+	if(st===ed) 
+		return true;
 
 	onePath.push(st);
 	visited[st]=true;
-	for(i in adjMat[shoppingList[st]])
-		if(!visited[i]&&adjMat[shoppingList[st]][shoppingList[i]]!=Infinity&&dfs(i,ed,dist-adjMat[shoppingList[st]][shoppingList[i]])){
+	for(var i=0; i<adjMat[st].length;i++)
+		if(!visited[i]&&adjMat[st][i]!=Infinity&&dfs(i,ed,dist-adjMat[st][i])){
 			return true;
 		}
 	onePath.pop();
