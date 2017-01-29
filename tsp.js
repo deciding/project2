@@ -85,17 +85,17 @@ function tsp(pos, bitmask) { // bitmask stores the visited coordinates
 
 function dfsSetup(){
 	finalPath=[];
-	visited=[]
-	for(var i=0;i<numOfVertices;i++)
-		visited.push(false);
 	shoppingOrder.unshift(0);
 	var prevPoint=0;
 	for(var i=0;i<shoppingOrder.length;i++){
-		onePath=[];
+		//onePath=[];
+		visited=[];
+		for(var j=0;j<numOfVertices;j++)
+			visited.push(false);
 		dfs(shoppingList[prevPoint],shoppingList[shoppingOrder[shoppingOrder.length-1-i]],dist[shoppingList[prevPoint]][shoppingList[shoppingOrder[shoppingOrder.length-1-i]]]);
-		var kk=0;
-		while(onePath.length!==0)
-			finalPath.push(onePath.pop());
+		//var kk=0;
+		// while(onePath.length!==0)
+		// 	finalPath.push(onePath.pop());
 		prevPoint=shoppingOrder[shoppingOrder.length-1-i];
 	}
 	finalPath.push(shoppingList[0]);
@@ -106,13 +106,13 @@ function dfs(st,ed,dist){
 	if(st===ed) 
 		return true;
 
-	onePath.push(st);
+	finalPath.push(st);
 	visited[st]=true;
 	for(var i=0; i<adjMat[st].length;i++)
 		if(!visited[i]&&adjMat[st][i]!=Infinity&&dfs(i,ed,dist-adjMat[st][i])){
 			return true;
 		}
-	onePath.pop();
+	finalPath.pop();
 	visited[st]=false;
 	return false;
 }

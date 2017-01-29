@@ -120,21 +120,30 @@ $( function() {
       var weight=adjMat[v1][v2];
       v1=selectedVert[v1];
       v2=selectedVert[v2];
-      if(DEBUG&&weight===Infinity)
-        console.log("inf edge err");
+      if(weight===Infinity){
+        alert("inf edge err");
+        return;
+      }
       var v1x=Math.floor(v1/vertsOnRow), v1y=v1%vertsOnRow;
       var v2x=Math.floor(v2/vertsOnRow), v2y=v2%vertsOnRow;
-      if(v1x===v2x)
-        for(i=1;i<-weight;i++){
-          drawPointOnPath(v1x*vertsOnRow+Math.min(v1y,v2y)+i,order++);
-        }
+      if(v1x===v2x){
+        for(i=0;i<weight;i++)
+          if(v1y<=v2y)
+            drawPointOnPath(v1x*vertsOnRow+v1y+i,order++);
+          else 
+            drawPointOnPath(v1x*vertsOnRow+v1y-i,order++);
+      }   
       else if(v1y===v2y)
-        for(i=1;i<-weight;i++){
-          drawPointOnPath((Math.min(v1x,v2x)+i)*vertsOnRow+v1y,order++);
+        for(i=0;i<weight;i++){
+          if(v1x<=v2x)
+            drawPointOnPath((v1x+i)*vertsOnRow+v1y,order++);
+          else
+            drawPointOnPath((v1x-i)*vertsOnRow+v1y,order++);
         }
       return order;
     }
     function drawPath(){
+      $("#selectable li").text("");
       var endPoint=selectedEdge[shoppingList[0]];
       var order=0;
       for(var i=0;i< finalPath.length;i++){
@@ -142,9 +151,9 @@ $( function() {
           order=drawLineOnPath(finalPath[i],finalPath[i+1],order);
       }
 
-      for(i in finalPath){
-         $("#"+selectedVert[finalPath[i]]).css("background","#000000");
-      }
+      // for(i in finalPath){
+      //    $("#"+selectedVert[finalPath[i]]).css("background","#000000");
+      // }
     }
 
     function shuffle(arr){
@@ -158,20 +167,21 @@ $( function() {
       return newArr;
     }
     function generateShoppingList(){
-      // var size=Math.floor(Math.random()*8)+1;
-      // var randSelectedVert=[];
-      // for(i in selectedVert)
-      //   randSelectedVert.push(parseInt(i));
-      // randSelectedVert=shuffle(randSelectedVert);
+      var size=Math.floor(Math.random()*10)+1;
+      var randSelectedVert=[];
+      for(i in selectedVert)
+        randSelectedVert.push(parseInt(i));
+      randSelectedVert=shuffle(randSelectedVert);
 
-      // shoppingList=[];
-      // shoppingList.push(selectedVert.indexOf(shippingPoint));
-      // for(i=0;i<size;i++){
-      //   shoppingList.push(randSelectedVert[i]);
-      // }
+      shoppingList=[];
+      shoppingList.push(selectedVert.indexOf(shippingPoint));
+      for(i=0;i<size;i++){
+        shoppingList.push(randSelectedVert[i]);
+      }
 
-      //shoppingList=[30,10,3,13,31,19,22,32,11];
-      shoppingList=[30,5,16,1];
+      // shoppingList=[30,10,3,13,31,19,22,32,11];
+      // //shoppingList=[30,5,16,1];
+      // //shoppingList=[30,5];
       $("[index]").removeAttr("index").css("background","#F39814");
       for(i in shoppingList){
         if(i!=="0")
