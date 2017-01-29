@@ -108,6 +108,9 @@ $( function() {
           }
       }
 
+      for(i in selectedVert){
+         $("#"+selectedVert[i]).attr("map",i);
+      }
     }
 
     function drawPointOnPath(id,order){
@@ -138,6 +141,10 @@ $( function() {
         if(i<finalPath.length-1)
           order=drawLineOnPath(finalPath[i],finalPath[i+1],order);
       }
+
+      for(i in finalPath){
+         $("#"+selectedVert[finalPath[i]]).css("background","#000000");
+      }
     }
 
     function shuffle(arr){
@@ -163,7 +170,8 @@ $( function() {
       //   shoppingList.push(randSelectedVert[i]);
       // }
 
-      shoppingList=[30,10,3,13,31,19,22,32,11];
+      //shoppingList=[30,10,3,13,31,19,22,32,11];
+      shoppingList=[30,5,16,1];
       $("[index]").removeAttr("index").css("background","#F39814");
       for(i in shoppingList){
         if(i!=="0")
