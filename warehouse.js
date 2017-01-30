@@ -79,7 +79,10 @@ $( function() {
       $("#selectable").empty();
       for(i=0;i<300;i++)
         $("#selectable").append('<li id=\"'+i+'\" class="ui-state-default"></li>');
-      var warehouseLayout=JSON.parse(localStorage.getItem("warehouseLayout"));
+      var warehouseLayout=JSON.parse(localStorage.getItem("warehouseLayout"),function(key,value){
+        if(value===null) return Infinity;
+        return value;
+      });
       if(!warehouseLayout) return;
       selectedVert=warehouseLayout.selectedVert;
       selectedEdge=warehouseLayout.selectedEdge;
@@ -108,9 +111,9 @@ $( function() {
           }
       }
 
-      for(i in selectedVert){
-         $("#"+selectedVert[i]).attr("map",i);
-      }
+      // for(i in selectedVert){
+      //    $("#"+selectedVert[i]).attr("map",i);
+      // }
     }
 
     function drawPointOnPath(id,order){
@@ -252,7 +255,7 @@ $( function() {
     $("#generateShortest").click(function(){
       generateShoppingList();
       if(DEBUG) console.log("shoppingList: "+shoppingList);
-      floydWarshall();
+      //floydWarshall();
       tspSetup();
       if(DEBUG) console.log("shoppingOrder: "+shoppingOrder);
       dfsSetup();
